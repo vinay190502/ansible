@@ -1,0 +1,43 @@
+---
+- hosts: all
+  user: root
+  become: yes
+  tasks:
+    - name: git
+      yum:
+        name: git
+        state: present
+    - name: maven
+      yum:
+        name: maven
+        state: present
+    - name: tomcat
+      get_url:
+        url: https://dlcdn.apache.org/tomcat/tomcat-9/v9.0.83/bin/apache-tomcat-9.0.83.tar.gz
+        dest: /root
+    - name: file extraction
+      unarchive:
+        src: /root/apache-tomcat-9.0.83.tar.gz
+        dest: /root
+        remote_src: yes
+    - name: git clone
+      git:
+        repo: https://github.com/vinay190502/live01.git
+        dest: /root/live01
+        clone: yes
+        update: yes
+    - name: mvn build
+      command: mvn clean package
+      args:
+        chdir: /root/live01
+      tags: build
+    - name: start tomcat
+      shell: nohup /root/apache-tomcat-9.0.83/bin/startup.sh
+      tags: start
+    - name: deploy tomcat
+      copy:
+        src: /root/live01/target/live.war
+        dest: /root/apache-tomcat-9.0.83/webapps
+        remote_src: yes
+      tags: deploy
+                                                                                                                                   1,2           Top
